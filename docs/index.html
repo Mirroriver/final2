@@ -19,15 +19,15 @@
   <button onclick="triggerLocation()">点击获取定位及自动提交Google表单</button>
 
   <script>
-    // 你的Google表单字段名，务必替换为你表单的实际entry.xx ID
-    const entryIPProxy = "entry.349181765";  // IP+代理结果字段
-    const entryLon = "entry.1434358418";     // 经度字段
-    const entryLat = "entry.99996352";       // 纬度字段
+    // Google表单字段ID，来自你之前给的：
+    const entryIPProxy = "entry.349181765";  
+    const entryLon = "entry.1434358418";
+    const entryLat = "entry.99996352";
 
-    // Google表单提交URL，替换成你的
-    const googleFormUrl = "https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse";
+    // 你给的Google表单提交URL（请确认无误）
+    const googleFormUrl = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSc6G64C2aYohHmaXdCMOBIZQZTGxLy8_g-TuIQDcq6rzsaUtg/formResponse";
 
-    // 获取IP接口：墙外稳定的ip.sb
+    // 获取公网IP，使用ip.sb接口
     async function getIP() {
       try {
         const res = await fetch('https://api.ip.sb/ip');
@@ -38,9 +38,9 @@
       }
     }
 
-    // 判断是否代理IP，基于ip_country_ranges.json（非墙内，不好实现精确代理检测，示例为非中国IP视为代理）
+    // 判断是否代理IP，基于你之前的ip_country_ranges.json逻辑
     async function isProxyIP(ip) {
-      if(ip === "获取失败") return false;
+      if (ip === "获取失败") return false;
       try {
         const ipNum = ip.split('.').reduce((acc, val) => acc * 256 + Number(val), 0);
         const response = await fetch('ip_country_ranges.json');
@@ -48,12 +48,13 @@
 
         for (const [start, end, country] of data) {
           if (ipNum >= start && ipNum <= end) {
-            return country !== "CN";  // 非中国IP视为代理
+            // 非中国IP视为代理IP
+            return country !== "CN";
           }
         }
         return false;
       } catch {
-        // 无法获取数据默认非代理
+        // 读取失败则假设非代理
         return false;
       }
     }
@@ -67,7 +68,7 @@
       output.textContent = `当前公网 IP: ${ip}\n是否代理IP: ${proxy ? "是" : "否"}`;
     }
 
-    // 触发定位+提交数据
+    // 获取定位并自动提交
     async function triggerLocation() {
       const info = document.getElementById('info');
       info.textContent = "获取IP中……";
@@ -95,25 +96,22 @@
       }, {timeout: 15000});
     }
 
-    // 提交数据给Google表单
+    // 提交到Google表单
     async function submitData(ip, proxy, lon, lat) {
       const ipProxyStr = `${ip} (${proxy ? "代理" : "非代理"})`;
-
-      // 构造提交参数
       const params = new URLSearchParams();
       params.append(entryIPProxy, ipProxyStr);
       params.append(entryLon, lon);
       params.append(entryLat, lat);
 
       try {
-        // POST请求提交数据
         await fetch(googleFormUrl, {
           method: 'POST',
-          mode: 'no-cors',  // 避免跨域错误，Google表单支持这种提交
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          mode: 'no-cors',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
           body: params.toString()
         });
-        console.log("Google表单提交成功");
+        console.log("提交成功");
       } catch (e) {
         console.error("提交失败", e);
       }
