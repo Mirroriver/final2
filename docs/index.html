@@ -15,7 +15,7 @@
 
   <button id="showIpBtn">显示当前公网 IP</button>
   <button id="locateBtn">点击获取定位并查询国家</button>
-  <button id="videoBtn">点此搜索QQ号查询他人IP</button>
+  <button id="videoBtn">打开视频网站</button>
 
   <pre id="status">状态信息将显示在这里...</pre>
 
@@ -108,21 +108,16 @@
       const status = document.getElementById('status');
       status.textContent = "检测是否能访问YouTube...";
       try {
-        // 尝试请求YouTube首页（mode:'no-cors' 不会返回内容，但能判断请求是否成功）
         await fetch('https://www.youtube.com', { mode: 'no-cors', method: 'HEAD', cache: 'no-cache' });
         status.textContent = "YouTube可访问，正在打开指定视频...";
         window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
       } catch (e) {
         status.textContent = "无法访问YouTube，打开哔哩哔哩视频...";
-        window.open("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click&vd_source=7504f18c191405de66c8b613d77dfea9", "_blank");
+        window.open("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=7504f18c191405de66c8b613d77dfea9", "_blank");
       }
     });
   </script>
 </body>
 </html>
 
-    });
-  </script>
-</body>
-</html>
 
