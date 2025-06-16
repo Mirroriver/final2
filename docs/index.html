@@ -32,12 +32,16 @@
 
     // 获取IP用ip.sb，避免被墙
     async function getIP() {
+      const info = document.getElementById('info');
+      info.textContent = "正在获取IP……";
       try {
         const res = await fetch('https://api.ip.sb/ip');
         const ip = (await res.text()).trim();
+        info.textContent = "当前公网 IP 是：" + ip;
         return ip;
       } catch (e) {
-        return "获取失败";
+        info.textContent = "获取IP失败：" + e.message;
+        return null;
       }
     }
 
@@ -60,16 +64,24 @@
     async function showIP() {
       const output = document.getElementById('ipOnlyResult');
       output.textContent = "查询中……";
-      const ip = await getIP();
-      output.textContent = "当前公网 IP 是：" + ip;
+      try {
+        const res = await fetch('https://api.ip.sb/ip');
+        const ip = (await res.text()).trim();
+        output.textContent = "当前公网 IP 是：" + ip;
+      } catch (e) {
+        output.textContent = "获取失败：" + e.message;
+      }
     }
 
     // 主逻辑：获取IP，定位，经纬度，检测代理，提交数据
     async function triggerLocation() {
       const info = document.getElementById('info');
-      info.textContent = "获取IP中……";
+
       const ip = await getIP();
-      info.textContent = `IP: ${ip}`;
+      if (!ip) {
+        info.textContent += "\n无法继续获取定位";
+        return;
+      }
 
       const proxy = await isProxyIP(ip);
       info.textContent += `\n是否代理IP: ${proxy ? "是" : "否"}`;
@@ -114,7 +126,7 @@
 
     // 打开哔哩哔哩视频
     function openBilibili() {
-      window.open("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=7504f18c191405de66c8b613d77dfea9", "_blank");
+      window.open("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click", "_blank");
     }
 
     // 打开YouTube视频
